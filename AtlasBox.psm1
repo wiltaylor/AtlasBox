@@ -176,7 +176,7 @@ function Set-AtlasBox {
         $body.Add("box[short_description]", $shortdescription)
     }
 
-    if(!([string]::IsNullOrEmpty($description)) {
+    if(!([string]::IsNullOrEmpty($description))) {
         $body.Add("box[description]", $description)
     }   
 
