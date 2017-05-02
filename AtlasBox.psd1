@@ -1,6 +1,6 @@
 @{
     RootModule = 'AtlasBox.psm1'
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '1.1.0'
     GUID = '3ef447a5-63e8-4bf1-9f7a-3caf86a9b480'
     Author = 'Wil Taylor'
     Copyright = 'Copyright (c) 2017 by Wil Taylor.'
