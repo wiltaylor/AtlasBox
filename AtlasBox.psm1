@@ -172,11 +172,11 @@ function Set-AtlasBox {
 
     $body = @{}
 
-    if($shortdescription -ne $null) {
+    if(!([string]::IsNullOrEmpty($shortdescription))) {
         $body.Add("box[short_description]", $shortdescription)
     }
 
-    if($description -ne $null) {
+    if(!([string]::IsNullOrEmpty($description)) {
         $body.Add("box[description]", $description)
     }   
 
@@ -294,7 +294,7 @@ function New-AtlasBoxVersion {
         "version[version]" = $version
     }
 
-    if($description -ne $null) {
+    if(!([string]::IsNullOrEmpty($description))) {
         $body.Add("version[description]", $description)
     }  
 
@@ -333,11 +333,11 @@ function Set-AtlasBoxVersion {
 
     $body = @{}
 
-    if($newversion -ne $null) {
+    if(!([string]::IsNullOrEmpty($newversion))) {
         $body.Add("version[version]", $newversion)
     }
 
-    if($description -ne $null) {
+    if(!([string]::IsNullOrEmpty($description))) {
         $body.Add("version[description]", $description)
     }
 
@@ -512,8 +512,8 @@ function New-AtlasBoxProvider {
         "provider[name]" = $ProviderName
     }
 
-    if($url -ne $null) {
-        $body.Add("provider[url]", $url)
+    if(!([string]::IsNullOrEmpty($url))) {
+        $body.Add("pro0vider[url]", $url)
     }  
 
     $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/providers" -Method Post -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
@@ -558,11 +558,11 @@ function Set-AtlasBoxProvider {
 
     $body = @{}
 
-    if($url -ne $null) {
+    if(!([string]::IsNullOrEmpty($url))) {
         $body.Add("provider[url]", $url)
     }
 
-    if($newProviderName -ne $null) {
+    if(!([string]::IsNullOrEmpty($newProviderName))) {
         $body.Add("provider[name]", $newProviderName)
     }
 
