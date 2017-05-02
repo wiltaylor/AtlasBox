@@ -645,7 +645,7 @@ function Send-AtlasBoxProvider{
     $requestStream = $webRequest.GetRequestStream()
     $fileStream = [System.IO.File]::OpenRead($Filename)
 
-    $chunk = New-Object byte[] $bufSize
+    $chunk = New-Object byte[] 10000
 
     while($bytes = $fileStream.Read($chunk, 0, $bufSize)){
         Write-Host "Write Chunk"
