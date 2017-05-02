@@ -1,8 +1,9 @@
 version: 1.1.{build}
 clone_folder: c:\atlasbox
 environment:
-  poshapikey:
-    secure: A7Jiy5VyLl8tItO6Ei/13TaO4VxKrP0441GlBElkua2Ka1aOXKvrZOVx00FQsdse
+  apikey:
+    secure: SWuUmXwJC0UZdwrLuWPj3V/i3qi4u9WswwKmh5HgXRL0Ve8sRbftZdWY3j/VPhWv
+  poshurl: https://www.myget.org/feed/Packages/wiltaylor-dev
 build: off
 test: off
 deploy_script:
