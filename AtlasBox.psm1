@@ -635,10 +635,7 @@ function Send-AtlasBoxProvider{
 
     $uploadPath = ($result.content | ConvertFrom-Json).upload_path
 
-    $webclient = New-Object System.Net.WebClient
-    $uri = New-Object System.Uri($uploadPath)
-
-    $webclient.UploadFile($uri, "PUT", $Filename)
+    Invoke-RestMethod -Uri $uploadPath -Method Put -InFile $Filename -TimeoutSec 86400000
 }
 
 <#
