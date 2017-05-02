@@ -105,7 +105,7 @@ function Get-AtlasBox {
 #>
 function New-AtlasBox {
     param([
-        Parameter(Mandatory = $true)][ValidatePattern("^[A-Za-z0-9.]+$")][string]$Name, 
+        Parameter(Mandatory = $true)][ValidatePattern("^[A-Za-z0-9.-]+$")][string]$Name, 
         [bool]$Private = $false)
 
     if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
