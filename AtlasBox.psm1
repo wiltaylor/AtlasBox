@@ -635,12 +635,33 @@ function Send-AtlasBoxProvider{
 
     $uploadPath = ($result.content | ConvertFrom-Json).upload_path
 
-    Write-Host $uploadPath 
+    $webrequest = [System.Net.HttpWebRequest]::Create($uploadPath)
+    $webRequest.Timeout = 86400000 #24 hours
+    $webRequest.Method = "PUT"
+    $webrequest.ContentType = "application/data"
+    $webRequest.AllowWriteStreamBuffering=$false
+    $webRequest.SendChunked=$true # needed by previous line
 
-    $webclient = New-Object System.Net.WebClient
-    $uri = New-Object System.Uri($uploadPath)
+    $requestStream = $webRequest.GetRequestStream()
+    $fileStream = [System.IO.File]::OpenRead($Filename)
 
-    $webclient.UploadFile($uri, "PUT", $Filename)
+    $chunk = New-Object byte[] $bufSize
+
+    while($bytes = $fileStream.Read($chunk, 0, $bufSize)){
+        Write-Host "Write Chunk"
+        $requestStream.Write($chunk, 0, $bytes)
+        $requestStream.flush()
+    }
+
+    $responceStream = $webRequest.getresponse()
+
+    $FileStream.Close()
+    $requestStream.Close()
+    $responceStream.Close()
+
+    $responceStream
+    $responceStream.GetResponseHeader("Content-Length") 
+    $responceStream.StatusCode
 }
 
 <#
