@@ -446,7 +446,7 @@ function Test-AtlasBoxProvider {
             $result = Get-AtlasBoxProvider -Name $Name -Version $Version -ProviderName $ProviderName
             return $result -ne $null
         }catch{
-            return $true
+            return $false
         }
 }
 
