@@ -688,7 +688,7 @@ function Send-AtlasBoxProvider{
 
     $uploadPath = ($result.content | ConvertFrom-Json).upload_path
 
-    Invoke-RestMethod -Uri $uploadPath -Method Put -InFile $Filename -TimeoutSec $Timeout
+    Invoke-RestMethod -Uri $uploadPath -Method Put -InFile $Filename -TimeoutSec $Timeout -ContentType "multipart/form-data"
 }
 
 <#
