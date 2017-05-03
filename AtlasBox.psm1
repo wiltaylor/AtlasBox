@@ -668,11 +668,27 @@ function Send-AtlasBoxProvider{
 
     if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
+    #This is a hack that prevents invoke-webrequest from returning an error after it has uploaded the file.
+    #it basically makes it trust all certificates. 
+    #More reading here: http://stackoverflow.com/questions/11696944/powershell-v3-invoke-webrequest-https-error/15841856#15841856
+    add-type @"
+        using System.Net;
+        using System.Security.Cryptography.X509Certificates;
+        public class TrustAllCertsPolicy : ICertificatePolicy {
+            public bool CheckValidationResult(
+                ServicePoint srvPoint, X509Certificate certificate,
+                WebRequest request, int certificateProblem) {
+                return true;
+            }
+        }
+"@
+    [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
     $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/provider/$ProviderName/upload" -Method Get -Headers $script:header
 
     $uploadPath = ($result.content | ConvertFrom-Json).upload_path
 
-    Invoke-RestMethod -Uri $uploadPath -Method Put -InFile $Filename -TimeoutSec $Timeout -TransferEncoding "Chunked"
+    Invoke-RestMethod -Uri $uploadPath -Method Put -InFile $Filename -TimeoutSec $Timeout
 }
 
 <#
