@@ -3,7 +3,7 @@ clone_folder: c:\atlasbox
 environment:
   apikey:
     secure: SWuUmXwJC0UZdwrLuWPj3V/i3qi4u9WswwKmh5HgXRL0Ve8sRbftZdWY3j/VPhWv
-  poshurl: https://www.myget.org/feed/Packages/wiltaylor-dev
+  poshurl: https://www.myget.org/F/wiltaylor-dev/api/v2/package
 build: off
 test: off
 deploy_script:
