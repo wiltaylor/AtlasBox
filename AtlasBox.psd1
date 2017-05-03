@@ -11,7 +11,7 @@
 
     # Functions to export from this module
     FunctionsToExport = @( 
-        'Set-AtlasToken'
+        'Use-AtlasToken'
         'Clear-AtlasToken'
         'Test-AtlasBox'
         'Get-AtlasBox'
