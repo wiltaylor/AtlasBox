@@ -18,7 +18,8 @@ $script:username = ""
     .PARAMETER Username
     The user name which the boxes being worked with is assigned to.
 #>
-function Set-AtlasToken {
+
+function Use-AtlasToken {
     param(
         [Parameter(Mandatory = $true)][string]$Token, 
         [Parameter(Mandatory = $true)][string]$Username)
@@ -36,7 +37,7 @@ function Set-AtlasToken {
     Clears set authentication token.
 
     .DESCRIPTION
-    This removes the Atlas Auth token from the current session. You need to call Set-AtlasToken again to make use of other cmdlets in this module.
+    This removes the Atlas Auth token from the current session. You need to call Use-AtlasToken again to make use of other cmdlets in this module.
 #>
 function Clear-AtlasToken {
     $script:token = $null
@@ -57,12 +58,12 @@ function Clear-AtlasToken {
 function Test-AtlasBox {
     param([Parameter(Mandatory = $true)][string]$Name)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     try{
         $result = Get-AtlasBox -Name $name
 
-        return $result -ne $null
+        return $null -ne $result
     }catch{
         return $false
     }
@@ -83,7 +84,7 @@ function Test-AtlasBox {
 function Get-AtlasBox {
     param([Parameter(Mandatory = $true)][string]$Name)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name" -Headers $script:header
     return $result.content | ConvertFrom-Json
@@ -104,19 +105,23 @@ function Get-AtlasBox {
     Set if box is private or not. By default it is set to false.
 #>
 function New-AtlasBox {
+    [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact="Medium")]
     param([
         Parameter(Mandatory = $true)][ValidatePattern("^[A-Za-z0-9.-]+$")][string]$Name, 
         [bool]$Private = $false)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $body = @{
         "box[name]" = $name
         "box[is_private]" = $private
     }
-    $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/boxes" -Method Post -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
 
-    return $result.content | ConvertFrom-Json
+    if($PSCmdlet.ShouldProcess($body)) {
+        $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/boxes" -Method Post -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
+
+        return $result.content | ConvertFrom-Json
+    }
 }
 
 <#
@@ -130,13 +135,15 @@ function New-AtlasBox {
     Name of box to return. (do not include the username).
 #>
 function Remove-AtlasBox{
+    [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact="Medium")]
     param([Parameter(Mandatory = $true)][string]$Name)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
-    $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name" -Method Delete -Headers $script:header
-
-    return $result.content | ConvertFrom-Json
+    if($PSCmdlet.ShouldProcess($body)) {
+        $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name" -Method Delete -Headers $script:header
+        return $result.content | ConvertFrom-Json
+    }
 }
 
 <#
@@ -162,13 +169,14 @@ function Remove-AtlasBox{
     Sets the box to public.
 #>
 function Set-AtlasBox {
+    [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact="Low")]
     param([Parameter(Mandatory = $true)][string]$Name, 
     [string]$ShortDescription, 
     [string]$Description, 
     [Parameter(ParameterSetName="Private")][switch]$Private, 
     [Parameter(ParameterSetName="Public")][switch]$Public)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $body = @{}
 
@@ -188,7 +196,10 @@ function Set-AtlasBox {
         $body.Add("box[is_private]", $false)
     }
 
-    $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name" -Method Put -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
+    if($PSCmdlet.ShouldProcess($body)) {
+        $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name" -Method Put -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
+        return $result.content | ConvertFrom-Json
+    }
 }
 
 <#
@@ -205,13 +216,18 @@ function Set-AtlasBox {
     New name for target box (do not include user name).
 #>
 function Rename-AtlasBox {
+    [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact="Low")]
     param([Parameter(Mandatory = $true)][string]$Name, 
     [Parameter(Mandatory = $true)][ValidatePattern("^[A-Za-z0-9]+$")][string]$NewName)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $body = @{ 'box[name]' = $newname }
-    $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name" -Method Put -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
+
+    if($PSCmdlet.ShouldProcess($body)) {
+        $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name" -Method Put -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
+        return $result.content | ConvertFrom-Json
+    }
 }
 
 <#
@@ -231,12 +247,12 @@ function Rename-AtlasBox {
 function Test-AtlasBoxVersion {
     param([Parameter(Mandatory = $true)][string]$Name, [Parameter(Mandatory = $true)][string]$Version)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     try{
         $result = Get-AtlasBoxVersion -Name $Name -Version $Version
 
-        return $result -ne $null
+        return $null -ne $result
     }catch{
         return $false
     }
@@ -259,7 +275,7 @@ function Test-AtlasBoxVersion {
 function Get-AtlasBoxVersion {
     param([Parameter(Mandatory = $true)][string]$Name, [Parameter(Mandatory = $true)][string]$Version)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version" -Headers $script:header
 
@@ -283,12 +299,13 @@ function Get-AtlasBoxVersion {
     Description to assign to version.
 #>
 function New-AtlasBoxVersion {
+   [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact="Medium")]
    param(
        [Parameter(Mandatory = $true)][string]$Name, 
        [Parameter(Mandatory = $true)][ValidatePattern("^[0-9]{1,8}\.[0-9]{1,5}\.[0-9]{1,5}")][string]$version, 
        [string]$description)   
    
-   if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+   if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
    $body = @{
         "version[version]" = $version
@@ -296,11 +313,12 @@ function New-AtlasBoxVersion {
 
     if(!([string]::IsNullOrEmpty($description))) {
         $body.Add("version[description]", $description)
-    }  
+    }
 
-    $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/versions" -Method Post -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
-
-    return $result.content | ConvertFrom-Json
+    if($pscmdlet.ShouldProcess($body)) {
+        $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/versions" -Method Post -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
+        return $result.content | ConvertFrom-Json
+    }
 }
 
 <#
@@ -323,13 +341,14 @@ function New-AtlasBoxVersion {
     Description of version object.    
 #>
 function Set-AtlasBoxVersion {
+    [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact="Low")]
     param(
         [Parameter(Mandatory = $true)][string]$Name, 
         [Parameter(Mandatory = $true)][string]$Version, 
         [ValidatePattern("^[0-9]{1,8}\.[0-9]{1,5}\.[0-9]{1,5}")][string]$NewVersion, 
         [string]$Description)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $body = @{}
 
@@ -341,7 +360,10 @@ function Set-AtlasBoxVersion {
         $body.Add("version[description]", $description)
     }
 
-    $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version" -Method Put -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
+    if($pscmdlet.ShouldProcess($body)) {
+        $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version" -Method Put -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
+        return $result.content | ConvertFrom-Json
+    }
 }
 
 <#
@@ -357,14 +379,17 @@ function Set-AtlasBoxVersion {
     .PARAMETER Version
     Name of version to remove from box.
 #>
+
 function Remove-AtlasBoxVersion {
+    [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact="Medium")]
     param([Parameter(Mandatory = $true)][string]$Name, [Parameter(Mandatory = $true)][string]$Version)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
-    $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version" -Method Delete -Headers $script:header
-
-    return $result.content | ConvertFrom-Json
+    if($pscmdlet.ShouldProcess($body)) {
+        $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version" -Method Delete -Headers $script:header
+        return $result.content | ConvertFrom-Json
+    }
 }
 
 <#
@@ -384,7 +409,7 @@ function Remove-AtlasBoxVersion {
 function Publish-AtlasBoxVersion {
     param([Parameter(Mandatory = $true)][string]$Name, [Parameter(Mandatory = $true)][string]$Version)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/release" -Method Put -Headers $script:header
 
@@ -410,7 +435,7 @@ function Publish-AtlasBoxVersion {
 function Unpublish-AtlasBoxVersion {
     param([Parameter(Mandatory = $true)][string]$Name, [Parameter(Mandatory = $true)][string]$Version)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/revoke" -Method Put -Headers $script:header
 
@@ -440,11 +465,11 @@ function Test-AtlasBoxProvider {
         [Parameter(Mandatory = $true)][string]$Version, 
         [Parameter(Mandatory = $true)][ValidateSet("virtualbox", "vmware_desktop", "hyperv", "aws", "digitalocean", "docker", "google", "rackspace", "parallels","veertu")][string]$ProviderName)
 
-        if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+        if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
         try{
             $result = Get-AtlasBoxProvider -Name $Name -Version $Version -ProviderName $ProviderName
-            return $result -ne $null
+            return $null -ne $result
         }catch{
             return $false
         }
@@ -473,7 +498,7 @@ function Get-AtlasBoxProvider {
         [Parameter(Mandatory = $true)][string]$Version, 
         [Parameter(Mandatory = $true)][ValidateSet("virtualbox", "vmware_desktop", "hyperv", "aws", "digitalocean", "docker", "google", "rackspace", "parallels","veertu")][string]$ProviderName)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/provider/$ProviderName" -Headers $script:header
 
@@ -501,12 +526,13 @@ function Get-AtlasBoxProvider {
 
 #>
 function New-AtlasBoxProvider {
+    [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact="Medium")]
     param([Parameter(Mandatory = $true)][string]$Name, 
         [Parameter(Mandatory = $true)][string]$version, 
         [Parameter(Mandatory = $true)][ValidateSet("virtualbox", "vmware_desktop", "hyperv", "aws", "digitalocean", "docker", "google", "rackspace", "parallels","veertu")][string]$ProviderName, 
         [string]$Url)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $body = @{
         "provider[name]" = $ProviderName
@@ -516,9 +542,10 @@ function New-AtlasBoxProvider {
         $body.Add("pro0vider[url]", $url)
     }  
 
-    $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/providers" -Method Post -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
-
-    return $result.content | ConvertFrom-Json
+    if($pscmdlet.ShouldProcess($body)) {
+        $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/providers" -Method Post -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
+        return $result.content | ConvertFrom-Json
+    }
 }
 
 <#
@@ -547,6 +574,7 @@ function New-AtlasBoxProvider {
 
 #>
 function Set-AtlasBoxProvider {
+    [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact="Low")]
     param(
         [Parameter(Mandatory = $true)][string]$Name, 
         [Parameter(Mandatory = $true)][string]$Version, 
@@ -554,7 +582,7 @@ function Set-AtlasBoxProvider {
         [string]$Url, 
         [Parameter(Mandatory = $true)][ValidateSet("virtualbox", "vmware_desktop", "hyperv", "aws", "digitalocean", "docker", "google", "rackspace", "parallels","veertu")][string]$NewProviderName)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $body = @{}
 
@@ -566,7 +594,10 @@ function Set-AtlasBoxProvider {
         $body.Add("provider[name]", $newProviderName)
     }
 
-    $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/provider/$ProviderName" -Method Put -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
+    if($pscmdlet.ShouldProcess($body)) {
+        $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/provider/$ProviderName" -Method Put -Headers $script:header -Body $body -ContentType "application/x-www-form-urlencoded"
+        return $result.content | ConvertFrom-Json
+    }
 }
 
 <#
@@ -587,16 +618,18 @@ function Set-AtlasBoxProvider {
 
 #>
 function Remove-AtlasBoxProvider{
+    [CmdletBinding(SupportsShouldProcess=$true,ConfirmImpact="High")]
     param(
         [Parameter(Mandatory = $true)][string]$Name, 
         [Parameter(Mandatory = $true)][string]$Version, 
         [Parameter(Mandatory = $true)][ValidateSet("virtualbox", "vmware_desktop", "hyperv", "aws", "digitalocean", "docker", "google", "rackspace", "parallels","veertu")][string]$ProviderName)
     
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
-    $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/provider/$ProviderName" -Method Delete -Headers $script:header
-
-    return $result.content | ConvertFrom-Json
+    if($pscmdlet.ShouldProcess($body)) {
+        $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/provider/$ProviderName" -Method Delete -Headers $script:header
+        return $result.content | ConvertFrom-Json
+    }
 }
 
 <#
@@ -633,7 +666,7 @@ function Send-AtlasBoxProvider{
         [Parameter(Mandatory = $true)][string]$Filename,
         [int]$Timeout = 86400) #24 hours default timeout.
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $result = Invoke-WebRequest -Uri "$script:baseurl/api/v1/box/$script:username/$name/version/$version/provider/$ProviderName/upload" -Method Get -Headers $script:header
 
@@ -671,7 +704,7 @@ function Receive-AtlasBoxProvider{
         [Parameter(Mandatory = $true)][ValidateSet("virtualbox", "vmware_desktop", "hyperv", "aws", "digitalocean", "docker", "google", "rackspace", "parallels","veertu")][string]$ProviderName, 
         [Parameter(Mandatory = $true)][string]$Filename)
 
-    if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
+    if([string]::IsNullOrEmpty($script:token)) { Write-Error "You need to login first with Use-AtlasToken"; return}
 
     $webclient = New-Object System.Net.WebClient
     $webclient.Headers.Add("Content-Type","application/x-www-form-urlencoded")
