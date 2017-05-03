@@ -621,13 +621,17 @@ function Remove-AtlasBoxProvider{
 
     .PARAMETER Filename
     Path to local image to upload to atlas.
+
+    .PARAMETER Timeout
+    Timeout before upload fails. This is set to 24 hours (86400 seconds) by default.
 #>
 function Send-AtlasBoxProvider{
     param(
         [Parameter(Mandatory = $true)][string]$Name, 
         [Parameter(Mandatory = $true)][string]$Version, 
         [Parameter(Mandatory = $true)][ValidateSet("virtualbox", "vmware_desktop", "hyperv", "aws", "digitalocean", "docker", "google", "rackspace", "parallels","veertu")][string]$ProviderName, 
-        [Parameter(Mandatory = $true)][string]$Filename)
+        [Parameter(Mandatory = $true)][string]$Filename,
+        [int]$Timeout = 86400) #24 hours default timeout.
 
     if($script:token -eq $null) { Write-Error "You need to login first with Set-AtlasToken"; return}
 
@@ -635,7 +639,7 @@ function Send-AtlasBoxProvider{
 
     $uploadPath = ($result.content | ConvertFrom-Json).upload_path
 
-    Invoke-RestMethod -Uri $uploadPath -Method Put -InFile $Filename -TimeoutSec 86400000
+    Invoke-RestMethod -Uri $uploadPath -Method Put -InFile $Filename -TimeoutSec $Timeout -ContentType "application/x-www-form-urlencoded"
 }
 
 <#
