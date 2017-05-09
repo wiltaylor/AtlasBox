@@ -675,9 +675,13 @@ function Send-AtlasBoxProvider{
         "Referer" = "https://atlas.hashicorp.com/$script:username/boxes/$name/versions/$version/providers/$ProviderName/edit"
         "Accept" = "*/*"
         "Origin" = "https://atlas.hashicorp.com"
+        "Accept-Encoding" = "gzip, deflate, sdch, br"
+        "Accept-Language" = "en-AU,en-GB;q=0.8,en-US;q=0.6,en;q=0.4"
+        "DNT" = "1"
     }
 
-    Invoke-RestMethod -Uri $uploadPath -Method Put -InFile $Filename -TimeoutSec $Timeout -ContentType "multipart/form-data" -Headers $header -TransferEncoding gzip
+
+    Invoke-RestMethod -Uri $uploadPath -Method Put -InFile $Filename -TimeoutSec $Timeout -ContentType "multipart/form-data" -Headers $header
 }
 
 <#
