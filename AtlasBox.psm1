@@ -675,8 +675,6 @@ function Send-AtlasBoxProvider{
         "Referer" = "https://atlas.hashicorp.com/$script:username/boxes/$name/versions/$version/providers/$ProviderName/edit"
         "Accept" = "*/*"
         "Origin" = "https://atlas.hashicorp.com"
-        "Connection" = "keep-alive"
-
     }
 
     Invoke-RestMethod -Uri $uploadPath -Method Put -InFile $Filename -TimeoutSec $Timeout -ContentType "multipart/form-data" -Headers $header -TransferEncoding gzip
